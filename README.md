@@ -43,6 +43,5 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 Washif Akhtar
 
 ## Acknowledgements
-- [cx_Freeze](https://github.com/marcelotduarte/cx_Freeze)
 - [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
 - [Scapy](https://scapy.net/)
