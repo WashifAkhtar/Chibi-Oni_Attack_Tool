@@ -32,8 +32,8 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/yourusername/chibi-oni.git
-    cd chibi-oni
+    git clone https://github.com/WashifAkhtar/Chibi-Oni_Attack_Tool
+    cd Linux
     ```
 
 2. **Install the Required Packages**
@@ -53,6 +53,7 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 1. **Download and Install the Debian Package**
 
     ```bash
+    cd installer
     sudo dpkg -i chibi-oni_1.0_amd64.deb
     ```
 
