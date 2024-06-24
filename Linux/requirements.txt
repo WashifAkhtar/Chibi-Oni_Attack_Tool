@@ -1,0 +1,9 @@
+customtkinter
+Pillow
+getmac
+asyncio
+ipaddress
+python-nmap
+paramiko
+pymetasploit3
+scapy
