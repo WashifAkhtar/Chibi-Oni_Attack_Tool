@@ -33,12 +33,12 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 
     ```bash
     git clone https://github.com/WashifAkhtar/Chibi-Oni_Attack_Tool
-    cd Linux
     ```
 
 2. **Install the Required Packages**
 
     ```bash
+    cd Linux
     pip install -r requirements.txt
     ```
 
@@ -63,5 +63,82 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
     Chibi-Oni
     ```
 
-## Directory Structure
+
+## Usage
+
+### Running the Application
+
+1. **From Source**: Ensure your virtual environment is activated and run:
+
+    ```bash
+    python3 src/main.py
+    ```
+
+2. **From the Installed Package**: Simply run:
+
+    ```bash
+    Chibi-Oni
+    ```
+
+### Application Features
+
+- **Host Discovery**: Use the Host Discovery tab to scan for active hosts in a specified network range.
+- **Port Scanning**: Use the Port Scanning tab to check for open ports on a target host.
+- **Network Statistics**: Use the Network Statistics tab to capture and display real-time network statistics.
+- **DDoS Attacks**: Use the DDoS Attack tab to launch Slowloris or SYN Flood attacks on a specified target.
+- **Metasploit Integration**: Use the Metasploit tab to interface with Metasploit for launching exploits.
+
+## Troubleshooting
+
+### Common Issues
+
+- **Missing Dependencies**: Ensure all required Python packages are installed. Use `pip install -r requirements.txt` to install them.
+- **Permission Issues**: Ensure you have the necessary permissions to run network operations and modify system files.
+
+### Debugging
+
+- **Running from the Terminal**: If you encounter issues running the application, try running it from the terminal to capture any error messages:
+
+    ```bash
+    python3 src/main.py
+    ```
+
+## Contributing
+
+1. **Fork the Repository**
+
+    ```bash
+    git clone https://github.com/yourusername/chibi-oni.git
+    cd chibi-oni
+    ```
+
+2. **Create a Feature Branch**
+
+    ```bash
+    git checkout -b feature/your-feature
+    ```
+
+3. **Commit Your Changes**
+
+    ```bash
+    git commit -m "Add your feature"
+    ```
+
+4. **Push to the Branch**
+
+    ```bash
+    git push origin feature/your-feature
+    ```
+
+5. **Create a Pull Request**
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For questions or feedback, please reach out to `your-email@example.com`.
+
+
 
