@@ -142,7 +142,7 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 
 ## Contact
 
-For questions or feedback, please reach out to `your-email@example.com`.
+For questions or feedback, please reach out to `darkeye066@gmail.com`.
 
 
 
