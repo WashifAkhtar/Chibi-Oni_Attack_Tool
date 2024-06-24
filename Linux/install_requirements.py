@@ -13,7 +13,8 @@ packages = [
     "python-nmap",
     "paramiko",
     "pymetasploit3",
-    "scapy"
+    "scapy",
+    "msgpack==1.0.0"
 ]
 
 for package in packages:
