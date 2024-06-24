@@ -57,7 +57,6 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 1. **Download and Install the Debian Package**
 
     ```bash
-    cd installer
     sudo dpkg -i chibi-oni_1.0_amd64.deb
     ```
 
