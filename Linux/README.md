@@ -1,4 +1,8 @@
-# Chibi-Oni Attack Tool
+<div align="center">
+  <img src="./Windows/icon.ico" alt="Chibi-Oni Logo" width="200">
+</div>
+
+# Chibi-Oni_Attack_Tool
 
 Chibi-Oni is a comprehensive cybersecurity tool designed for various network analysis tasks. It includes functionalities such as host discovery, port scanning, DDoS attacks, and more, all wrapped in a user-friendly GUI built with `tkinter` and `customtkinter`.
 
@@ -68,10 +72,10 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 
 ### Running the Application
 
-1. **From Source**: Ensure your virtual environment is activated and run:
+1. **From Source**: Go to Chibi-Oni_Attack_Tool/Linux/ and run:
 
     ```bash
-    python3 src/main.py
+    python3 main.py
     ```
 
 2. **From the Installed Package**: Simply run:
@@ -100,7 +104,7 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 - **Running from the Terminal**: If you encounter issues running the application, try running it from the terminal to capture any error messages:
 
     ```bash
-    python3 src/main.py
+    python3 main.py
     ```
 
 ## Contributing
@@ -108,8 +112,8 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 1. **Fork the Repository**
 
     ```bash
-    git clone https://github.com/yourusername/chibi-oni.git
-    cd chibi-oni
+    git clone https://github.com/WashifAkhtar/Chibi-Oni_Attack_Tool
+    cd Linux
     ```
 
 2. **Create a Feature Branch**
@@ -134,7 +138,7 @@ Chibi-Oni is a comprehensive cybersecurity tool designed for various network ana
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the LICENSE file for more details.
 
 ## Contact
 
